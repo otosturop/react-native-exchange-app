@@ -12,7 +12,6 @@ export default class Converter extends Component {
         super(props);
 
         this.state = {
-            baseurl: 'https://api.exchangeratesapi.io/latest?base=',
             moneyRate: 'TRY',
             resultMoneyRate: 'USD',
             resultAmount: 1,
