@@ -59,5 +59,6 @@ android/*
 ios/*
 node_modules/*
 
-[A.buckconfig
+.buckconfig
 .flowconfig
+.watchmanconfig
