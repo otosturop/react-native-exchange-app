@@ -33,7 +33,7 @@ export default class GoldList extends Component {
 
     exchange(){
         return new Promise((resolve, reject) => {
-            fetch("http://doviz.mehmetarikan.site/botaltin.php") 
+            fetch("******") 
                 .then(response => response.json())
                 .then(data => {
                     console.log(data, "gold")
