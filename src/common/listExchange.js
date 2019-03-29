@@ -32,7 +32,7 @@ export default class ListExchange extends Component {
 
     exchange(){
         return new Promise((resolve, reject) => {
-            fetch("http://doviz.mehmetarikan.site/botdoviz.php") 
+            fetch("****") 
                 .then(response => response.json())
                 .then(data => {
                     console.log(data, "exchange")
