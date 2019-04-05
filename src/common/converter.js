@@ -1,8 +1,9 @@
 import React, {Component} from 'react';
-import {StyleSheet, Text, View, Dimensions, Picker, Alert} from 'react-native';
+import {StyleSheet, Text, View, Dimensions, TouchableOpacity, Picker, Alert} from 'react-native';
 import {CustomInput} from './customInput'
 import Image from 'react-native-scalable-image';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -16,8 +17,11 @@ export default class Converter extends Component {
             resultMoneyRate: 'USD',
             resultAmount: 1,
             moneys: [],
+            moneysSign: [],
+            currencySign: '\u20BA',
             flagRight: require('../img/flag/TRY.png'),
-            total: null
+            total: null,
+            changeFlag: true
         }
 
         this.exchange = this.exchange.bind(this);
@@ -27,7 +31,8 @@ export default class Converter extends Component {
     componentDidMount() {
         this.exchange().then(result => {
             this.setState({
-                moneys: result
+                moneys: result.currency,
+                moneysSign: result.sign
             },() => {
                 this.calculation();
             })
@@ -36,21 +41,36 @@ export default class Converter extends Component {
     }
 
     calculation() {
-        this.setState({
-            total: this.state.resultAmount * this.state.moneys[this.state.resultMoneyRate]
-        })
+        if(this.state.changeFlag === true){
+            this.setState({
+                total: this.state.resultAmount * this.state.moneys[this.state.resultMoneyRate]
+            },() => {
+                this.definitionMoneySign();
+            })
+        }else {
+            this.setState({
+                total: this.state.resultAmount / this.state.moneys[this.state.resultMoneyRate]
+            },() => {
+                this.definitionMoneySign();
+            })
+        }
 
     }
+
+    definitionMoneySign(){
+        if(this.state.changeFlag === false){
+            this.setState({
+                currencySign: this.state.moneysSign[this.state.resultMoneyRate]
+            })
+        }else {
+            this.setState({
+                currencySign: '\u20BA'
+            })
+        }
+    } 
     
     flags(flag){
-        if(flag === "TRY"){
-            return(
-                <Image
-                    width={width * 0.3}
-                    source={require('../img/flag/TRY.png')}
-                />
-            );
-        }else if(flag === "USD"){
+        if(flag === "USD"){
             return(
                 <Image
                     width={width * 0.3}
@@ -107,45 +127,49 @@ export default class Converter extends Component {
             fetch("http://doviz.mehmetarikan.site/botdoviz.php") 
                 .then(response => response.json())
                 .then(data => {
-                    resolve(data.currency);
+                    resolve(data);
                 })
                 .catch(err => reject(err));
         });
     }
 
     render() {
+        const {changeFlag, currencySign, resultAmount} = this.state;
         const money = [
             {
-                title: 'Türk Lirası',
-                value: 'TRY'
-            },
-            {
                 title: 'Amerikan Doları',
-                value: 'USD'
+                value: 'USD',
+                sign:  '\u0024'
             },
             {
                 title: 'Euro',
-                value: 'EUR'
+                value: 'EUR',
+                sign:  '\u20AC'
             },
             {
                 title: 'İngiliz Sterlini',
-                value: 'GBP'
+                value: 'GBP',
+                sign:  '\uFFE1'
             },
             {
                 title: 'İsviçre Frangı',
-                value: 'CHF'
+                value: 'CHF',
+                sign: '\u20A3'
             },
             {
                 title: 'Japon Yeni',
-                value: 'JPY'
+                value: 'JPY',
+                sign:  'u00a5'
             },
             {
                 title: 'Rus Rublesi',
-                value: 'RUB'
+                value: 'RUB',
+                sign:  'u20bd'
             },
             {
                 title: 'Çin Yuanı',
-                value: 'CNY'
+                value: 'CNY',
+                sign:  'u00a5'
             }
           ];
         return(
@@ -160,57 +184,100 @@ export default class Converter extends Component {
                         }else{
                             Alert.alert("Lütfen pozitif sayılar giriniz")
                         }
-                        
-                        
                     }}
-                    value={ String(this.state.resultAmount) }
+                    value={ String(resultAmount) }
                 />
                 <View style={styles.resultExchange}>
                     <Text style={styles.resultExchangeText}>
-                        { Number(this.state.total).toFixed(2)} {'\u20BA'}
+                        { Number(this.state.total).toFixed(2)} {currencySign}
                     </Text>
                 </View>
-
+                {
+                changeFlag ?
+                    <View style={styles.selectedContainer}>
+                        <View style={styles.elementPickerView}>
+                            <Picker
+                                selectedValue={this.state.resultMoneyRate}
+                                style={styles.elementPicker}
+                                onValueChange={(itemValue, itemIndex) => {
+                                    this.setState({resultMoneyRate: itemValue}, () => {
+                                        this.calculation();
+                                    })
+                                }
+                            }>
+                                { money.map( (value, index) => {
+                                    return <Picker.Item key={index} label={ value.title } value={ value.value } />
+                                })}
+                            </Picker>
+                        </View>
+                        <View style={{justifyContent:'center'}}>
+                            <Icon color='#455a64' name='arrow-circle-right' size={20} />
+                        </View>
+                        <View style={styles.elementPickerViewText}>
+                            <Text style={styles.tlText}>Türk Lirası</Text> 
+                        </View>
+                    </View>    
+                :
+                    <View style={styles.selectedContainer}>
+                        <View style={styles.elementPickerViewText}>
+                            <Text style={styles.tlText}>Türk Lirası</Text> 
+                        </View>
+                        <View style={styles.elementPickerView}>
+                            <Picker
+                                selectedValue={this.state.resultMoneyRate}
+                                style={styles.elementPicker}
+                                onValueChange={(itemValue, itemIndex) => {
+                                    this.setState({resultMoneyRate: itemValue}, () => {
+                                        this.calculation();
+                                    })
+                                }
+                            }>
+                                { money.map( (value, index) => {
+                                    return <Picker.Item key={index} label={ value.title } value={ value.value } />
+                                })}
+                            </Picker>
+                        </View>
+                    </View>
+                }
                 <View style={styles.selectedContainer}>
-                    <View style={styles.elementPickerView}>
-                        <Picker
-                            selectedValue={this.state.resultMoneyRate}
-                            style={styles.elementPicker}
-                            onValueChange={(itemValue, itemIndex) => {
-                                this.setState({resultMoneyRate: itemValue}, () => {
+                    {
+                    changeFlag ? 
+                        <View style={styles.flag}>
+                            {this.flags(this.state.resultMoneyRate)}
+                        </View>
+                    :
+                        <View style={styles.flag}>
+                            <Image
+                                width={width * 0.3}
+                                source={this.state.flagRight}
+                            />
+                        </View>
+                    }        
+                    <View style={styles.arrow}>
+                        <TouchableOpacity onPress={() => {
+                                this.setState({
+                                    changeFlag : !this.state.changeFlag
+                                }, () => {
                                     this.calculation();
                                 })
-                            }
-                        }>
-                            { money.map( (value, index) => {
-                                return <Picker.Item key={index} label={ value.title } value={ value.value } />
-                            })}
-                        </Picker>
+                            }}>
+                            <Icon color='#455a64' name='exchange' size={40} />
+                        </TouchableOpacity>    
                     </View>
-                    <View style={styles.elementPickerViewText}>
-                        <Text style={styles.tlText}>Türk Lirası</Text> 
-                    </View>
+                    {
+                    changeFlag ? 
+                        <View style={styles.flag}>
+                            <Image
+                                width={width * 0.3}
+                                source={this.state.flagRight}
+                            />
+                        </View>
+                    :
+                        <View style={styles.flag}>
+                            {this.flags(this.state.resultMoneyRate)}
+                        </View>
+                    }
                 </View>
-
-
-                <View style={styles.selectedContainer}>
-                    <View style={styles.flag}>
-                        {this.flags(this.state.resultMoneyRate)}
-                    </View>  
-                    <View style={styles.arrow}>
-                        <Icon color='#455a64' name='arrow-alt-circle-right' size={50} />
-                    </View>
-                    <View style={styles.flag}>
-                        <Image
-                            width={width * 0.3}
-                            source={this.state.flagRight}
-                        />
-                    </View>
-                         
-                    
-                </View>
-                
-        
             </View>
         )
     }
@@ -233,7 +300,7 @@ const styles = StyleSheet.create({
     },
     elementPicker: {
         height: height * 0.05, 
-        width: width * 0.4,
+        width: width * 0.35,
         color: '#3558a4',
     },
     elementPickerView: {
@@ -249,7 +316,7 @@ const styles = StyleSheet.create({
         color: '#3558a4',
         fontSize: 17,
         height: height * 0.05, 
-        width: width * 0.4,
+        width: width * 0.35,
         textAlign: 'center',
         textAlignVertical: 'center',
     },
